@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "BestInSlot \u2192 USD (auto-slug)",
+  "description": "On bestinslot.xyz collection pages, fetch daily BTC series, map to USD using your BTCUSD file (CSV/JSON), and render a mini USD chart + CSV export.",
+  "version": "5.1.0",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://v2api.bestinslot.xyz/*",
+    "https://api.coingecko.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://bestinslot.xyz/*"
+      ],
+      "js": [
+        "bitcoin-data.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "chart-viewer.html",
+        "bitcoin-data.js"
+      ],
+      "matches": [
+        "https://bestinslot.xyz/*"
+      ]
+    }
+  ]
+}
