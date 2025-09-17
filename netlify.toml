@@ -2,6 +2,18 @@
   publish = "public"
   command = ""
 
+# Pretty URLs for collections
+[[redirects]]
+  from = "/:slug"
+  to = "/index.html?slug=:slug"
+  status = 200
+
+[[redirects]]
+  from = "/ordinals/collections/:slug"
+  to = "/index.html?slug=:slug"
+  status = 200
+
+# SPA catch-all (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
