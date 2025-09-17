@@ -76,42 +76,30 @@ async function handleLoadCollection() {
         const statusText = useCoinGecko ? 'Fetching collection data with CoinGecko...' : 'Fetching collection data...';
         showStatus(statusText, 'loading');
 
-        // Fetch ordinal data via Netlify function (serverless backend)
-        const response = await fetch(`/.netlify/functions/bestinslot-proxy?slug=${encodeURIComponent(slug)}`);
+        // Fetch ordinal data via Supabase Edge Function
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project.supabase.co';
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/collection?slug=${encodeURIComponent(slug)}${useCoinGecko ? '&useCoinGecko=true' : ''}`);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             throw new Error(errorData.error || `HTTP ${response.status}`);
         }
 
-        const rawData = await response.json();
+        const result = await response.json();
 
-        // Parse and process data
-        const ordinalData = parseBestInSlotData(rawData);
-        const usdData = await convertToUSD(ordinalData, useCoinGecko);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch collection data');
+        }
 
-        const validData = usdData.filter(p => p.usd != null);
-        const missingPoints = usdData.length - validData.length;
+        currentData = result.data;
+        const stats = result.stats;
+
+        // Filter valid data points for display
+        const validData = currentData.filter(p => p.usd != null);
 
         if (validData.length === 0) {
             throw new Error('No USD data available for this collection');
         }
-
-        // Calculate statistics
-        const usdValues = validData.map(p => p.usd);
-        const stats = {
-            totalPoints: validData.length,
-            missingPoints: missingPoints,
-            minUsd: usdValues.length ? Math.min(...usdValues) : 0,
-            maxUsd: usdValues.length ? Math.max(...usdValues) : 0,
-            avgUsd: usdValues.length ? usdValues.reduce((a, b) => a + b, 0) / usdValues.length : 0,
-            dateRange: {
-                start: ordinalData.length ? ordinalData[0].day : null,
-                end: ordinalData.length ? ordinalData[ordinalData.length - 1].day : null
-            }
-        };
-
-        currentData = usdData;
 
         // Update UI
         updateStats(stats);
@@ -313,22 +301,20 @@ function handleToggleView() {
 }
 
 async function handleDownloadCsv() {
-    if (!currentSlug || !currentData) return;
+    if (!currentSlug) return;
 
     try {
         showStatus('Generating CSV...', 'loading');
 
-        // Generate CSV data
-        const csvRows = [['day', 'btc', 'usd', 'btc_usd_px']];
-        currentData.forEach(p => {
-            csvRows.push([p.day, p.btc, p.usd || '', p.btcPrice || '']);
-        });
+        // Use Supabase CSV export function
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project.supabase.co';
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/csv-export?slug=${encodeURIComponent(currentSlug)}`);
 
-        // Convert to CSV string using Papa Parse
-        const csv = Papa.unparse(csvRows);
+        if (!response.ok) {
+            throw new Error('Failed to generate CSV');
+        }
 
-        // Create and download the file
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

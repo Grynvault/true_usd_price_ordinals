@@ -5,21 +5,39 @@
 
 Convert BestInSlot ordinal prices to USD using historical Bitcoin price data. Multiple interfaces available: **Web App**, **CLI Tool**, and **Browser Extension**.
 
-## 🌐 Frontend-Only Web Application (Recommended)
+## 🌐 Production Deployment (Recommended)
 
-### Quick Start - No Server Required!
+### Supabase + Netlify Architecture
+- **Backend**: Supabase Edge Functions (serverless, free tier)
+- **Frontend**: Netlify static hosting (free tier)
+- **Zero server maintenance**, enterprise-grade infrastructure
+
+### Quick Production Deploy
 ```bash
-# Simply open the HTML file in your browser
-open public/index.html
+# 1. Deploy backend to Supabase
+supabase functions deploy
 
-# Or use any static server:
-cd public && python3 -m http.server 8000
-# Then visit: http://localhost:8000
+# 2. Update frontend config
+# Edit public/config.js with your Supabase URL
+
+# 3. Deploy to Netlify
+# Drag public/ folder to Netlify or connect via Git
+
+# See DEPLOYMENT.md for detailed instructions
 ```
 
-### Alternative: With Express Server
+### Local Development
 ```bash
-# Install and run backend server (optional)
+# Backend: Start Supabase local stack
+supabase start
+
+# Frontend: Serve static files
+cd public && python3 -m http.server 8000
+```
+
+### Alternative: Express Server (Development)
+```bash
+# Traditional server approach (not recommended for production)
 npm install
 npm start
 # Visit: http://127.0.0.1:3000
