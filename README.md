@@ -5,16 +5,24 @@
 
 Convert BestInSlot ordinal prices to USD using historical Bitcoin price data. Multiple interfaces available: **Web App**, **CLI Tool**, and **Browser Extension**.
 
-## 🌐 Web Application (Recommended)
+## 🌐 Frontend-Only Web Application (Recommended)
 
-### Quick Start
+### Quick Start - No Server Required!
 ```bash
-# Install and run
+# Simply open the HTML file in your browser
+open public/index.html
+
+# Or use any static server:
+cd public && python3 -m http.server 8000
+# Then visit: http://localhost:8000
+```
+
+### Alternative: With Express Server
+```bash
+# Install and run backend server (optional)
 npm install
 npm start
-
-# Open in browser
-http://127.0.0.1:3000
+# Visit: http://127.0.0.1:3000
 ```
 
 ### Features
