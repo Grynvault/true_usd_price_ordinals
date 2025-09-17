@@ -1,0 +1,24 @@
+[build]
+  # No build command needed for static site
+  command = ""
+  # Publish the public directory
+  publish = "public"
+
+[build.environment]
+  # No build environment needed
+
+# Optional: Configure redirects for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+# Optional: Set custom headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
