@@ -76,11 +76,15 @@ async function handleLoadCollection() {
         const statusText = useCoinGecko ? 'Fetching collection data with CoinGecko...' : 'Fetching collection data...';
         showStatus(statusText, 'loading');
 
-        // Fetch ordinal data from BestInSlot API via CORS proxy
-        const bestInSlotUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://v2api.bestinslot.xyz/collection/chart?slug=${slug}`)}`;
-        const response = await fetch(bestInSlotUrl);
-        const proxyData = await response.json();
-        const rawData = JSON.parse(proxyData.contents);
+        // Fetch ordinal data via Netlify function (serverless backend)
+        const response = await fetch(`/.netlify/functions/bestinslot-proxy?slug=${encodeURIComponent(slug)}`);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const rawData = await response.json();
 
         // Parse and process data
         const ordinalData = parseBestInSlotData(rawData);
