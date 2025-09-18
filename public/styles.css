@@ -7,7 +7,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     min-height: 100vh;
     color: #333;
     line-height: 1.6;
@@ -56,7 +56,7 @@ body {
     font-weight: 700;
     color: #333;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -102,8 +102,8 @@ body {
 }
 
 .checkbox-label input[type="checkbox"]:checked {
-    background: #ff8c00;
-    border-color: #ff8c00;
+    background: #e67e22;
+    border-color: #e67e22;
 }
 
 .checkbox-label input[type="checkbox"]:checked::after {
@@ -118,7 +118,7 @@ body {
 }
 
 .checkbox-label:hover input[type="checkbox"] {
-    border-color: #ff8c00;
+    border-color: #e67e22;
     transform: scale(1.05);
 }
 
@@ -129,6 +129,21 @@ body {
     align-items: center;
     margin-bottom: 20px;
     flex-wrap: wrap;
+}
+
+.search-collection-preview {
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.search-preview-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    border: 2px solid rgba(230, 126, 34, 0.3);
 }
 
 .search-input {
@@ -145,17 +160,17 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: #ff8c00;
+    border-color: #e67e22;
     background: rgba(255, 255, 255, 1);
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(255, 140, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(230, 126, 34, 0.3);
 }
 
 .load-button {
     padding: 16px 32px;
-    background: linear-gradient(135deg, #ff8c00 0%, #ff6600 100%);
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
     color: white;
-    border: none;
+    border: 2px solid #d35400;
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
@@ -166,11 +181,13 @@ body {
     gap: 10px;
     min-width: 180px;
     justify-content: center;
+    box-shadow: 0 4px 15px rgba(211, 84, 0, 0.3);
 }
 
 .load-button:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(255, 140, 0, 0.4);
+    box-shadow: 0 8px 25px rgba(211, 84, 0, 0.5);
+    background: linear-gradient(135deg, #d35400 0%, #bf4f07 100%);
 }
 
 .load-button:disabled {
@@ -265,7 +282,7 @@ body {
     text-align: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
-    border-left: 4px solid #ff8c00;
+    border-left: 4px solid #e67e22;
     transition: transform 0.2s ease;
 }
 
@@ -325,9 +342,9 @@ body {
     align-items: center;
     gap: 15px;
     padding: 15px;
-    background: rgba(255, 140, 0, 0.1);
+    background: rgba(230, 126, 34, 0.1);
     border-radius: 12px;
-    border: 1px solid rgba(255, 140, 0, 0.2);
+    border: 1px solid rgba(230, 126, 34, 0.2);
 }
 
 .preview-image {
@@ -362,10 +379,10 @@ body {
 
 .download-button, .toggle-button {
     padding: 10px 20px;
-    border: 2px solid #ff8c00;
+    border: 2px solid #e67e22;
     border-radius: 8px;
     background: transparent;
-    color: #ff8c00;
+    color: #e67e22;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -373,7 +390,7 @@ body {
 }
 
 .download-button:hover, .toggle-button:hover {
-    background: #ff8c00;
+    background: #e67e22;
     color: white;
     transform: translateY(-2px);
 }
@@ -416,7 +433,7 @@ body {
 
 .info-card li:before {
     content: "•";
-    color: #ff8c00;
+    color: #e67e22;
     font-size: 1.2rem;
     position: absolute;
     left: 0;

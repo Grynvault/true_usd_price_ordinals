@@ -104,6 +104,7 @@ async function handleLoadCollection() {
         // Update UI
         updateStats(stats);
         await loadCollectionPreview(slug);
+        await updateSearchPreview(slug);
         createChart(validData);
         updateUrl(slug);
 
@@ -183,7 +184,7 @@ function createChart(data) {
 
     const chartData = isUsdView ? usdPrices : btcPrices;
     const chartLabel = isUsdView ? 'USD Price' : 'BTC Price';
-    const color = isUsdView ? '#ff8c00' : '#ff6600';
+    const color = isUsdView ? '#e67e22' : '#d35400';
 
     // Calculate quarterly trend line using moving average
     const trendData = calculateQuarterlyTrend(data, isUsdView);
@@ -537,14 +538,14 @@ function calculateQuarterlyTrend(data, isUsdView) {
 // Load collection preview image and info
 async function loadCollectionPreview(slug) {
     try {
-        // Fetch collection info from BestInSlot API
-        const response = await fetch(`https://v2api.bestinslot.xyz/collection/${encodeURIComponent(slug)}`);
+        // Step 1: Get collection metadata from BestInSlot v3 API
+        const infoResponse = await fetch(`https://api.bestinslot.xyz/v3/collection/info?slug=${encodeURIComponent(slug)}`);
 
-        if (!response.ok) {
+        if (!infoResponse.ok) {
             throw new Error('Collection not found');
         }
 
-        const collectionData = await response.json();
+        const collectionInfo = await infoResponse.json();
 
         // Show the preview section
         const previewSection = document.getElementById('collectionPreview');
@@ -553,23 +554,49 @@ async function loadCollectionPreview(slug) {
         const previewDescription = document.getElementById('previewDescription');
 
         // Set collection info
-        previewTitle.textContent = collectionData.name || slug.toUpperCase();
-        previewDescription.textContent = collectionData.description || `Collection: ${slug}`;
+        previewTitle.textContent = collectionInfo.name || slug.toUpperCase();
+        previewDescription.textContent = collectionInfo.description || `Collection: ${slug}`;
 
-        // Set preview image (try different possible image fields)
-        const imageUrl = collectionData.image ||
-                        collectionData.icon ||
-                        collectionData.thumbnail ||
-                        collectionData.preview_image ||
-                        `https://ordinalswallet.com/inscription/${collectionData.sample_inscription_id}` ||
-                        null;
+        // Step 2: Try to get image from collection metadata first
+        let imageUrl = collectionInfo.logo ||
+                      collectionInfo.banner ||
+                      collectionInfo.image ||
+                      collectionInfo.icon ||
+                      collectionInfo.thumbnail ||
+                      null;
 
+        // Step 3: If no image in metadata, get a sample inscription from the collection
+        if (!imageUrl) {
+            try {
+                const inscriptionsResponse = await fetch(`https://api.bestinslot.xyz/v3/collection/inscriptions?slug=${encodeURIComponent(slug)}`);
+
+                if (inscriptionsResponse.ok) {
+                    const inscriptionsData = await inscriptionsResponse.json();
+
+                    if (inscriptionsData.inscriptions && inscriptionsData.inscriptions.length > 0) {
+                        // Get the first inscription ID (or you could implement other logic like most recent, floor, etc.)
+                        const firstInscriptionId = inscriptionsData.inscriptions[0].id || inscriptionsData.inscriptions[0];
+
+                        // Step 4: Use ordinals.com preview for the inscription
+                        imageUrl = `https://ordinals.com/preview/${firstInscriptionId}`;
+                    }
+                }
+            } catch (inscriptionError) {
+                console.log('Could not fetch sample inscription:', inscriptionError.message);
+            }
+        }
+
+        // Set the image
         if (imageUrl) {
             previewImage.src = imageUrl;
             previewImage.onerror = function() {
-                // Fallback to a placeholder or hide image
-                this.style.display = 'none';
+                // Fallback: try og:image scraping as last resort
+                this.src = `https://bestinslot.xyz/ordinals/collections/${slug}/og-image`;
+                this.onerror = function() {
+                    this.style.display = 'none';
+                };
             };
+            previewImage.style.display = 'block';
         } else {
             previewImage.style.display = 'none';
         }
@@ -580,5 +607,72 @@ async function loadCollectionPreview(slug) {
         console.log('Could not load collection preview:', error.message);
         // Hide preview section if we can't load collection info
         document.getElementById('collectionPreview').classList.add('hidden');
+    }
+}
+
+// Update search preview image (smaller version in search bar)
+async function updateSearchPreview(slug) {
+    try {
+        // Step 1: Get collection metadata from BestInSlot v3 API
+        const infoResponse = await fetch(`https://api.bestinslot.xyz/v3/collection/info?slug=${encodeURIComponent(slug)}`);
+
+        if (!infoResponse.ok) {
+            throw new Error('Collection not found');
+        }
+
+        const collectionInfo = await infoResponse.json();
+
+        // Show the search preview section
+        const searchPreviewSection = document.getElementById('searchCollectionPreview');
+        const searchPreviewImage = document.getElementById('searchPreviewImage');
+
+        // Step 2: Try to get image from collection metadata first
+        let imageUrl = collectionInfo.logo ||
+                      collectionInfo.banner ||
+                      collectionInfo.image ||
+                      collectionInfo.icon ||
+                      collectionInfo.thumbnail ||
+                      null;
+
+        // Step 3: If no image in metadata, get a sample inscription from the collection
+        if (!imageUrl) {
+            try {
+                const inscriptionsResponse = await fetch(`https://api.bestinslot.xyz/v3/collection/inscriptions?slug=${encodeURIComponent(slug)}`);
+
+                if (inscriptionsResponse.ok) {
+                    const inscriptionsData = await inscriptionsResponse.json();
+
+                    if (inscriptionsData.inscriptions && inscriptionsData.inscriptions.length > 0) {
+                        // Get the first inscription ID
+                        const firstInscriptionId = inscriptionsData.inscriptions[0].id || inscriptionsData.inscriptions[0];
+
+                        // Step 4: Use ordinals.com preview for the inscription
+                        imageUrl = `https://ordinals.com/preview/${firstInscriptionId}`;
+                    }
+                }
+            } catch (inscriptionError) {
+                console.log('Could not fetch sample inscription for search preview:', inscriptionError.message);
+            }
+        }
+
+        // Set the image
+        if (imageUrl) {
+            searchPreviewImage.src = imageUrl;
+            searchPreviewImage.onerror = function() {
+                // Fallback: try og:image scraping as last resort
+                this.src = `https://bestinslot.xyz/ordinals/collections/${slug}/og-image`;
+                this.onerror = function() {
+                    this.parentElement.classList.add('hidden');
+                };
+            };
+            searchPreviewSection.classList.remove('hidden');
+        } else {
+            searchPreviewSection.classList.add('hidden');
+        }
+
+    } catch (error) {
+        console.log('Could not load search collection preview:', error.message);
+        // Hide search preview section if we can't load collection info
+        document.getElementById('searchCollectionPreview').classList.add('hidden');
     }
 }

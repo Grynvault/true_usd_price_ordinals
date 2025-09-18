@@ -14,7 +14,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <img src="logos/grynvault.jpg" alt="Grynvault Logo" class="logo">
+                <img src="logos/GryngottsLOGO.png" alt="Grynvault Logo" class="logo">
                 <div class="header-text">
                     <h1>Grynvault Ordinals Tracker</h1>
                     <p class="subtitle">Track ordinal prices in USD with historical Bitcoin data</p>
@@ -25,6 +25,9 @@
         <!-- Search Section -->
         <section class="search-section">
             <div class="search-container">
+                <div id="searchCollectionPreview" class="search-collection-preview hidden">
+                    <img id="searchPreviewImage" class="search-preview-image" alt="Collection Preview">
+                </div>
                 <input
                     type="text"
                     id="collectionSlug"
@@ -37,13 +40,13 @@
                     <div class="spinner hidden"></div>
                 </button>
             </div>
-            <div class="options-section">
+            <!-- <div class="options-section">
                 <label class="checkbox-label">
                     <input type="checkbox" id="useCoinGecko" checked>
                     <span class="checkmark"></span>
                     Use CoinGecko to fill missing Bitcoin prices
                 </label>
-            </div>
+            </div> -->
             <div class="popular-collections">
                 <span>Popular:</span>
                 <button class="collection-tag" data-slug="wizards">wizards</button>
