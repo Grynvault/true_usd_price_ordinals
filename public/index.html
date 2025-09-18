@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BestInSlot USD Tracker</title>
+    <title>Grynvault Ordinals Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="config.js"></script>
     <script src="bitcoin-data.js"></script>
@@ -13,8 +13,13 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>BestInSlot USD Tracker</h1>
-            <p class="subtitle">Convert ordinal prices to USD using historical Bitcoin data</p>
+            <div class="header-content">
+                <img src="logos/grynvault.jpg" alt="Grynvault Logo" class="logo">
+                <div class="header-text">
+                    <h1>Grynvault Ordinals Tracker</h1>
+                    <p class="subtitle">Track ordinal prices in USD with historical Bitcoin data</p>
+                </div>
+            </div>
         </header>
 
         <!-- Search Section -->
@@ -84,7 +89,16 @@
         <!-- Chart Section -->
         <section id="chartSection" class="chart-section hidden">
             <div class="chart-header">
-                <h3 id="chartTitle">Price Chart</h3>
+                <div class="chart-title-container">
+                    <h3 id="chartTitle">Price Chart</h3>
+                    <div id="collectionPreview" class="collection-preview hidden">
+                        <img id="previewImage" class="preview-image" alt="Collection Preview">
+                        <div class="preview-info">
+                            <div id="previewTitle" class="preview-title"></div>
+                            <div id="previewDescription" class="preview-description"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="chart-controls">
                     <button id="downloadCsv" class="download-button">Download CSV</button>
                     <button id="toggleView" class="toggle-button">BTC View</button>

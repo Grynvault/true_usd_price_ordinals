@@ -103,6 +103,7 @@ async function handleLoadCollection() {
 
         // Update UI
         updateStats(stats);
+        await loadCollectionPreview(slug);
         createChart(validData);
         updateUrl(slug);
 
@@ -182,7 +183,10 @@ function createChart(data) {
 
     const chartData = isUsdView ? usdPrices : btcPrices;
     const chartLabel = isUsdView ? 'USD Price' : 'BTC Price';
-    const color = isUsdView ? '#667eea' : '#f39c12';
+    const color = isUsdView ? '#ff8c00' : '#ff6600';
+
+    // Calculate quarterly trend line using moving average
+    const trendData = calculateQuarterlyTrend(data, isUsdView);
 
     currentChart = new Chart(ctx, {
         type: 'line',
@@ -204,6 +208,20 @@ function createChart(data) {
                 pointHoverBackgroundColor: color,
                 pointHoverBorderColor: '#ffffff',
                 pointHoverBorderWidth: 3
+            }, {
+                label: 'Quarterly Trend',
+                data: trendData,
+                borderColor: color + 'AA',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.1,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointBackgroundColor: color + 'AA',
+                pointBorderColor: color + 'AA',
+                pointBorderWidth: 1
             }]
         },
         options: {
@@ -480,4 +498,87 @@ function formatNumber(num) {
 
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString();
+}
+
+// Calculate quarterly trend line using moving average
+function calculateQuarterlyTrend(data, isUsdView) {
+    if (data.length < 30) return data.map(() => null); // Need at least 30 days for meaningful trend
+
+    const values = data.map(p => isUsdView ? p.usd : p.btc);
+    const windowSize = Math.max(30, Math.floor(data.length / 8)); // Approximately quarterly window
+    const trendData = [];
+
+    for (let i = 0; i < data.length; i++) {
+        if (i < windowSize - 1) {
+            trendData.push(null);
+        } else {
+            // Calculate weighted moving average (more weight to recent values)
+            let sum = 0;
+            let weightSum = 0;
+
+            for (let j = 0; j < windowSize; j++) {
+                const index = i - j;
+                const weight = (windowSize - j) / windowSize; // Linear weight decay
+                const value = values[index];
+
+                if (value !== null && value !== undefined) {
+                    sum += value * weight;
+                    weightSum += weight;
+                }
+            }
+
+            trendData.push(weightSum > 0 ? sum / weightSum : null);
+        }
+    }
+
+    return trendData;
+}
+
+// Load collection preview image and info
+async function loadCollectionPreview(slug) {
+    try {
+        // Fetch collection info from BestInSlot API
+        const response = await fetch(`https://v2api.bestinslot.xyz/collection/${encodeURIComponent(slug)}`);
+
+        if (!response.ok) {
+            throw new Error('Collection not found');
+        }
+
+        const collectionData = await response.json();
+
+        // Show the preview section
+        const previewSection = document.getElementById('collectionPreview');
+        const previewImage = document.getElementById('previewImage');
+        const previewTitle = document.getElementById('previewTitle');
+        const previewDescription = document.getElementById('previewDescription');
+
+        // Set collection info
+        previewTitle.textContent = collectionData.name || slug.toUpperCase();
+        previewDescription.textContent = collectionData.description || `Collection: ${slug}`;
+
+        // Set preview image (try different possible image fields)
+        const imageUrl = collectionData.image ||
+                        collectionData.icon ||
+                        collectionData.thumbnail ||
+                        collectionData.preview_image ||
+                        `https://ordinalswallet.com/inscription/${collectionData.sample_inscription_id}` ||
+                        null;
+
+        if (imageUrl) {
+            previewImage.src = imageUrl;
+            previewImage.onerror = function() {
+                // Fallback to a placeholder or hide image
+                this.style.display = 'none';
+            };
+        } else {
+            previewImage.style.display = 'none';
+        }
+
+        previewSection.classList.remove('hidden');
+
+    } catch (error) {
+        console.log('Could not load collection preview:', error.message);
+        // Hide preview section if we can't load collection info
+        document.getElementById('collectionPreview').classList.add('hidden');
+    }
 }
