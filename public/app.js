@@ -72,7 +72,8 @@ async function handleLoadCollection() {
     hideChart();
 
     try {
-        const useCoinGecko = document.getElementById('useCoinGecko').checked;
+        const useCoinGeckoElement = document.getElementById('useCoinGecko');
+        const useCoinGecko = useCoinGeckoElement ? useCoinGeckoElement.checked : false;
         const statusText = useCoinGecko ? 'Fetching collection data with CoinGecko...' : 'Fetching collection data...';
         showStatus(statusText, 'loading');
 
@@ -186,8 +187,8 @@ function createChart(data) {
     const chartLabel = isUsdView ? 'USD Price' : 'BTC Price';
     const color = isUsdView ? '#e67e22' : '#d35400';
 
-    // Calculate quarterly trend line using moving average
-    const trendData = calculateQuarterlyTrend(data, isUsdView);
+    // Calculate simple trend line connecting first and last half averages
+    const trendData = calculateSimpleTrend(data, isUsdView);
 
     currentChart = new Chart(ctx, {
         type: 'line',
@@ -210,18 +211,18 @@ function createChart(data) {
                 pointHoverBorderColor: '#ffffff',
                 pointHoverBorderWidth: 3
             }, {
-                label: 'Quarterly Trend',
+                label: 'Trend Line',
                 data: trendData,
-                borderColor: color + 'AA',
+                borderColor: '#3498db',
                 backgroundColor: 'transparent',
                 borderWidth: 2,
-                borderDash: [5, 5],
+                borderDash: [8, 4],
                 fill: false,
-                tension: 0.1,
+                tension: 0,
                 pointRadius: 0,
-                pointHoverRadius: 4,
-                pointBackgroundColor: color + 'AA',
-                pointBorderColor: color + 'AA',
+                pointHoverRadius: 0,
+                pointBackgroundColor: '#3498db',
+                pointBorderColor: '#3498db',
                 pointBorderWidth: 1
             }]
         },
@@ -501,35 +502,29 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString();
 }
 
-// Calculate quarterly trend line using moving average
-function calculateQuarterlyTrend(data, isUsdView) {
-    if (data.length < 30) return data.map(() => null); // Need at least 30 days for meaningful trend
+// Calculate simple trend line connecting first half and last half averages
+function calculateSimpleTrend(data, isUsdView) {
+    if (data.length < 4) return data.map(() => null); // Need at least 4 data points
 
-    const values = data.map(p => isUsdView ? p.usd : p.btc);
-    const windowSize = Math.max(30, Math.floor(data.length / 8)); // Approximately quarterly window
+    const values = data.map(p => isUsdView ? p.usd : p.btc).filter(v => v !== null && v !== undefined);
+
+    if (values.length < 4) return data.map(() => null);
+
+    // Split data into first half and last half
+    const midPoint = Math.floor(values.length / 2);
+    const firstHalf = values.slice(0, midPoint);
+    const lastHalf = values.slice(midPoint);
+
+    // Calculate averages for each half
+    const firstHalfAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
+    const lastHalfAvg = lastHalf.reduce((sum, val) => sum + val, 0) / lastHalf.length;
+
+    // Create linear trend line from start to end
     const trendData = [];
+    const slope = (lastHalfAvg - firstHalfAvg) / (data.length - 1);
 
     for (let i = 0; i < data.length; i++) {
-        if (i < windowSize - 1) {
-            trendData.push(null);
-        } else {
-            // Calculate weighted moving average (more weight to recent values)
-            let sum = 0;
-            let weightSum = 0;
-
-            for (let j = 0; j < windowSize; j++) {
-                const index = i - j;
-                const weight = (windowSize - j) / windowSize; // Linear weight decay
-                const value = values[index];
-
-                if (value !== null && value !== undefined) {
-                    sum += value * weight;
-                    weightSum += weight;
-                }
-            }
-
-            trendData.push(weightSum > 0 ? sum / weightSum : null);
-        }
+        trendData.push(firstHalfAvg + (slope * i));
     }
 
     return trendData;
