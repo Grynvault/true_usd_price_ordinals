@@ -182,6 +182,9 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Log incoming request for debugging
+  console.log(`${req.method} ${req.url}`);
+
   try {
     const url = new URL(req.url);
     const endpoint = url.pathname.split('/').pop();

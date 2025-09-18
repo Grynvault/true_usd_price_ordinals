@@ -35,6 +35,6 @@ redirect_uri = ""
 url = ""
 
 [functions]
-# Example function — replace/add more as needed
-[functions.hello-world]
-verify_jwt = true
+# Price API function - publicly accessible without authentication
+[functions.price-api]
+verify_jwt = false
