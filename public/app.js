@@ -77,8 +77,8 @@ async function handleLoadCollection() {
         showStatus(statusText, 'loading');
 
         // Fetch ordinal data via Supabase Edge Function
-        const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project.supabase.co';
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/collection?slug=${encodeURIComponent(slug)}${useCoinGecko ? '&useCoinGecko=true' : ''}`);
+        const FUNCTION_URL = window.SUPABASE_FUNCTION_URL || 'https://lfwsooldipswbvbpnoxo.functions.supabase.co';
+        const response = await fetch(`${FUNCTION_URL}/price-api?slug=${encodeURIComponent(slug)}${useCoinGecko ? '&useCoinGecko=true' : ''}`);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -307,8 +307,8 @@ async function handleDownloadCsv() {
         showStatus('Generating CSV...', 'loading');
 
         // Use Supabase CSV export function
-        const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project.supabase.co';
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/csv-export?slug=${encodeURIComponent(currentSlug)}`);
+        const FUNCTION_URL = window.SUPABASE_FUNCTION_URL || 'https://lfwsooldipswbvbpnoxo.functions.supabase.co';
+        const response = await fetch(`${FUNCTION_URL}/price-api?slug=${encodeURIComponent(currentSlug)}&format=csv`);
 
         if (!response.ok) {
             throw new Error('Failed to generate CSV');
