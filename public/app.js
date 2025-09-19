@@ -259,6 +259,7 @@ function createChart(data) {
                     borderWidth: 1,
                     cornerRadius: 8,
                     displayColors: false,
+                    filter: (ctx) => ctx.datasetIndex === 0,
                     callbacks: {
                         title: function(context) {
                             return new Date(context[0].label).toLocaleDateString();
@@ -268,14 +269,22 @@ function createChart(data) {
                             const point = data[index];
 
                             if (isUsdView) {
+                                return `USD Price: $${point.usd.toFixed(2)}`;
+                            } else {
+                                return `BTC Price: ${point.btc.toFixed(6)} BTC`;
+                            }
+                        },
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            const point = data[index];
+
+                            if (isUsdView) {
                                 return [
-                                    `USD Price: $${point.usd.toFixed(2)}`,
                                     `BTC Price: ${point.btc.toFixed(6)} BTC`,
                                     `BTC Rate: $${point.btcPrice.toLocaleString()}/BTC`
                                 ];
                             } else {
                                 return [
-                                    `BTC Price: ${point.btc.toFixed(6)} BTC`,
                                     `USD Value: $${point.usd.toFixed(2)}`,
                                     `BTC Rate: $${point.btcPrice.toLocaleString()}/BTC`
                                 ];

@@ -717,7 +717,7 @@ serve(async (req) => {
     // Collections endpoint - Use analytics table as primary source
     if (endpoint === 'collections') {
       const hiscores = url.searchParams.get('hiscores') === 'true';
-      const limit = parseInt(url.searchParams.get('limit') || '20');
+      // Remove limit - let frontend handle pagination/lazy loading
 
       // Query analytics table directly with JOIN to get collection metadata
       const { data: analyticsData, error } = await supabaseClient
@@ -740,8 +740,7 @@ serve(async (req) => {
           )
         `)
         .gte('total_points', 10)
-        .order('trend_gradient', { ascending: false })
-        .limit(limit);
+        .order('trend_gradient', { ascending: false });
 
       if (error) {
         console.error('Analytics query error:', error);
