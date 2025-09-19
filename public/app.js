@@ -576,7 +576,7 @@ function displayHiscores(hiscores) {
             <div class="hiscore-header">
                 ${collection.logo_image_base64 ?
                     `<img src="${collection.logo_image_base64}" class="hiscore-logo" alt="${collection.name}">` :
-                    `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #e67e22, #d35400); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${index + 1}</div>`
+                    `<img src="logos/images.png" class="hiscore-logo" alt="${collection.name}">`
                 }
                 <div>
                     <div class="hiscore-name">${collection.name}</div>
@@ -837,8 +837,9 @@ async function showHiscores() {
         }
 
         // Filter collections with analytics and gradients, sort by gradient descending
+        // Only show collections with 90+ data points for statistical significance
         hiscoresData = data.collections
-            .filter(c => c.collection_analytics && c.collection_analytics.trend_gradient != null && c.collection_analytics.total_points >= 10)
+            .filter(c => c.collection_analytics && c.collection_analytics.trend_gradient != null && c.collection_analytics.total_points >= 90)
             .sort((a, b) => b.collection_analytics.trend_gradient - a.collection_analytics.trend_gradient);
 
         if (hiscoresData.length === 0) {
@@ -905,10 +906,10 @@ function renderHiscores() {
         const trendClass = analytics.trend_gradient > 0 ? 'positive' : 'negative';
         const rankNumber = startIndex + index + 1;
 
-        // Create image element - use cached base64 image if available, otherwise show placeholder
+        // Create image element - use cached base64 image if available, otherwise use default logo
         const imageHtml = collection.logo_image_base64 ?
             `<img src="${collection.logo_image_base64}" class="hiscore-image" alt="${collection.name || collection.slug}">` :
-            `<div class="hiscore-image-placeholder">${rankNumber}</div>`;
+            `<img src="logos/images.png" class="hiscore-image" alt="${collection.name || collection.slug}">`;
 
         return `
             <div class="hiscore-list-item" onclick="loadCollectionFromHiscores('${collection.slug}')">

@@ -720,18 +720,7 @@ body {
     border: 2px solid #f0f0f0;
 }
 
-.hiscore-image-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #e67e22, #d35400);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
+/* Removed hiscore-image-placeholder - now using default logo image */
 
 .hiscores-pagination-nav {
     display: flex;
@@ -931,8 +920,7 @@ body {
         font-size: 0.8rem;
     }
 
-    .hiscore-image,
-    .hiscore-image-placeholder {
+    .hiscore-image {
         width: 30px;
         height: 30px;
     }
