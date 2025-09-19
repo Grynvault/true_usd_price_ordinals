@@ -40,24 +40,43 @@
                     <div class="spinner hidden"></div>
                 </button>
             </div>
-            <!-- <div class="options-section">
+            <div class="options-section">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="useCoinGecko" checked>
-                    <span class="checkmark"></span>
-                    Use CoinGecko to fill missing Bitcoin prices
+                    <input type="checkbox" id="useCoinGecko" style="display: none;" checked>
+                    <!-- <span class="checkmark"></span>
+                    Use CoinGecko to fill missing Bitcoin prices -->
                 </label>
-            </div> -->
+            </div>
             <div class="popular-collections">
                 <span>Popular:</span>
                 <button class="collection-tag" data-slug="wizards">wizards</button>
                 <button class="collection-tag" data-slug="nodemonkes">nodemonkes</button>
                 <button class="collection-tag" data-slug="bitcoin-puppets">bitcoin-puppets</button>
-                <button class="collection-tag" data-slug="ordinal-maxi-biz">ordinal-maxi-biz</button>
+                <button class="collection-tag" data-slug="pizza-ninjas">pizza-ninjas</button>
+                <button id="showHiscores" class="collection-tag hiscores-button">🏆 Top Performers</button>
             </div>
         </section>
 
         <!-- Status Messages -->
         <div id="statusMessage" class="status-message hidden"></div>
+
+        <!-- Hiscores Section -->
+        <section id="hiscoresSection" class="hiscores-section hidden">
+            <div class="hiscores-header">
+                <div class="hiscores-header-left">
+                    <h3>🏆 Top Stable Upward Trending Collections</h3>
+                    <p class="hiscores-subtitle">Collections with consistent positive price trends and low volatility (3+ months old)</p>
+                </div>
+                <div class="hiscores-header-right">
+                    <button id="hideHiscores" class="toggle-button">← Back to Search</button>
+                    <button class="hiscores-per-page active" id="top10Button" onclick="changeHiscoresPerPage(10)">Top 10</button>
+                    <button class="hiscores-per-page" id="top100Button" onclick="changeHiscoresPerPage(100)">Top 100</button>
+                </div>
+            </div>
+            <div id="hiscoresList">
+                <!-- Hiscores will be populated here -->
+            </div>
+        </section>
 
         <!-- Stats Dashboard -->
         <section id="statsSection" class="stats-section hidden">
@@ -118,8 +137,8 @@
                 <h4>📊 Data Sources</h4>
                 <ul>
                     <li><strong>Ordinal Prices:</strong> Real-time from BestInSlot API</li>
-                    <li><strong>Bitcoin Prices:</strong> Embedded historical data (2024-2025)</li>
-                    <li><strong>Future:</strong> Will be converted to API for real-time updates</li>
+                    <li><strong>Bitcoin Prices:</strong> Embedded historical data + CoinGecko API (2010-2025)</li>
+                    <!-- <li><strong>Future:</strong> Will be converted to API for real-time updates</li> -->
                 </ul>
             </div>
         </section>

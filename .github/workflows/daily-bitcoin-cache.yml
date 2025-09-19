@@ -1,0 +1,26 @@
+name: Daily Bitcoin Price Cache
+
+on:
+  schedule:
+    # Runs every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  cache-bitcoin-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Bitcoin Prices
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            ${{ secrets.SUPABASE_FUNCTION_URL }}/bitcoin-price-cache
+
+      - name: Log Success
+        if: success()
+        run: echo "Bitcoin prices cached successfully"
+
+      - name: Log Failure
+        if: failure()
+        run: echo "Failed to cache Bitcoin prices"

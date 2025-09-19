@@ -38,8 +38,10 @@ function setupEventListeners() {
     document.querySelectorAll('.collection-tag').forEach(tag => {
         tag.addEventListener('click', function() {
             const slug = this.getAttribute('data-slug');
-            collectionInput.value = slug;
-            handleLoadCollection();
+            if (slug) {
+                collectionInput.value = slug;
+                handleLoadCollection();
+            }
         });
     });
 
@@ -48,6 +50,17 @@ function setupEventListeners() {
 
     // Toggle view
     toggleView.addEventListener('click', handleToggleView);
+
+    // Hiscores functionality
+    const showHiscoresBtn = document.getElementById('showHiscores');
+    const hideHiscoresBtn = document.getElementById('hideHiscores');
+
+    if (showHiscoresBtn) {
+        showHiscoresBtn.addEventListener('click', showHiscores);
+    }
+    if (hideHiscoresBtn) {
+        hideHiscoresBtn.addEventListener('click', hideHiscores);
+    }
 }
 
 function checkUrlParams() {
@@ -74,7 +87,7 @@ async function handleLoadCollection() {
     try {
         const useCoinGeckoElement = document.getElementById('useCoinGecko');
         const useCoinGecko = useCoinGeckoElement ? useCoinGeckoElement.checked : false;
-        const statusText = useCoinGecko ? 'Fetching collection data with CoinGecko...' : 'Fetching collection data...';
+        const statusText = 'Fetching collection data...';
         showStatus(statusText, 'loading');
 
         // Fetch ordinal data via Supabase Edge Function
@@ -104,8 +117,9 @@ async function handleLoadCollection() {
 
         // Update UI
         updateStats(stats);
-        await loadCollectionPreview(slug);
-        await updateSearchPreview(slug);
+        // TODO: Disabled due to API key requirement
+        // await loadCollectionPreview(slug);
+        // await updateSearchPreview(slug);
         createChart(validData);
         updateUrl(slug);
 
@@ -502,29 +516,147 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString();
 }
 
-// Calculate simple trend line connecting first half and last half averages
+// Hiscores functionality
+async function showHiscores() {
+    try {
+        // Hide other sections
+        document.getElementById('statsSection').classList.add('hidden');
+        document.getElementById('chartSection').classList.add('hidden');
+
+        // Show hiscores section
+        const hiscoresSection = document.getElementById('hiscoresSection');
+        hiscoresSection.classList.remove('hidden');
+
+        showStatus('Loading top performing collections...', 'loading');
+
+        // Fetch hiscores data
+        const FUNCTION_URL = window.SUPABASE_FUNCTION_URL || 'https://lfwsooldipswbvbpnoxo.functions.supabase.co';
+        const response = await fetch(`${FUNCTION_URL}/price-api/hiscores?limit=12`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch hiscores');
+        }
+
+        displayHiscores(result.hiscores);
+
+        if (result.hiscores.length === 0) {
+            showStatus('No collections in hiscores yet. Collections need to be analyzed first by searching for them.', 'loading');
+        } else {
+            hideStatus();
+        }
+
+    } catch (error) {
+        console.error('Error loading hiscores:', error);
+        showStatus(`Error loading hiscores: ${error.message}`, 'error');
+    }
+}
+
+function displayHiscores(hiscores) {
+    const hiscoresList = document.getElementById('hiscoresList');
+
+    if (hiscores.length === 0) {
+        hiscoresList.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">
+                <h4>No collections analyzed yet</h4>
+                <p>Collections appear in hiscores after being searched and analyzed.<br>
+                Try searching for some collections first!</p>
+            </div>
+        `;
+        return;
+    }
+
+    hiscoresList.innerHTML = hiscores.map((collection, index) => `
+        <div class="hiscore-card" onclick="loadCollectionFromHiscore('${collection.slug}')">
+            <div class="hiscore-header">
+                ${collection.logo_image_base64 ?
+                    `<img src="${collection.logo_image_base64}" class="hiscore-logo" alt="${collection.name}">` :
+                    `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #e67e22, #d35400); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${index + 1}</div>`
+                }
+                <div>
+                    <div class="hiscore-name">${collection.name}</div>
+                    <div style="font-size: 0.8rem; color: #999;">${collection.slug}</div>
+                </div>
+            </div>
+            <div class="hiscore-stats">
+                <div class="hiscore-stat">
+                    <div class="hiscore-stat-value">${collection.gradient > 0 ? '+' : ''}${collection.gradient.toFixed(2)}</div>
+                    <div class="hiscore-stat-label">Gradient</div>
+                </div>
+                <div class="hiscore-stat">
+                    <div class="hiscore-stat-value">$${collection.avg_usd.toFixed(0)}</div>
+                    <div class="hiscore-stat-label">Avg Price</div>
+                </div>
+            </div>
+            <div class="hiscore-performance">
+                <div class="hiscore-performance-score">${collection.total_points} pts</div>
+                <div class="hiscore-performance-label">Data Points</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function hideHiscores() {
+    document.getElementById('hiscoresSection').classList.add('hidden');
+    hideStatus();
+}
+
+function loadCollectionFromHiscore(slug) {
+    hideHiscores();
+    collectionInput.value = slug;
+    handleLoadCollection();
+}
+
+// Calculate split trend line that cuts between start-end line and first-second half averages line
 function calculateSimpleTrend(data, isUsdView) {
     if (data.length < 4) return data.map(() => null); // Need at least 4 data points
 
-    const values = data.map(p => isUsdView ? p.usd : p.btc).filter(v => v !== null && v !== undefined);
+    const values = data.map(p => isUsdView ? p.usd : p.btc);
+    const validValues = values.filter(v => v !== null && v !== undefined);
 
-    if (values.length < 4) return data.map(() => null);
+    if (validValues.length < 4) return data.map(() => null);
 
-    // Split data into first half and last half
-    const midPoint = Math.floor(values.length / 2);
-    const firstHalf = values.slice(0, midPoint);
-    const lastHalf = values.slice(midPoint);
+    // Find first and last valid prices
+    let firstPrice = null;
+    let lastPrice = null;
+
+    for (let i = 0; i < values.length; i++) {
+        if (values[i] !== null && values[i] !== undefined) {
+            if (firstPrice === null) firstPrice = values[i];
+            lastPrice = values[i];
+        }
+    }
+
+    // Split data into first half and last half for averages
+    const midPoint = Math.floor(validValues.length / 2);
+    const firstHalf = validValues.slice(0, midPoint);
+    const lastHalf = validValues.slice(midPoint);
 
     // Calculate averages for each half
     const firstHalfAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
     const lastHalfAvg = lastHalf.reduce((sum, val) => sum + val, 0) / lastHalf.length;
 
-    // Create linear trend line from start to end
+    // Create the split trend line
     const trendData = [];
-    const slope = (lastHalfAvg - firstHalfAvg) / (data.length - 1);
 
     for (let i = 0; i < data.length; i++) {
-        trendData.push(firstHalfAvg + (slope * i));
+        const t = i / (data.length - 1); // Normalize position to 0-1
+
+        // Line 1: Start price to end price (straight line)
+        const startEndLine = firstPrice + (lastPrice - firstPrice) * t;
+
+        // Line 2: First half average to last half average (straight line)
+        const avgLine = firstHalfAvg + (lastHalfAvg - firstHalfAvg) * t;
+
+        // Final trend line: Split/average between the two lines
+        const splitTrendValue = (startEndLine + avgLine) / 2;
+
+        trendData.push(splitTrendValue);
     }
 
     return trendData;
@@ -670,4 +802,150 @@ async function updateSearchPreview(slug) {
         // Hide search preview section if we can't load collection info
         document.getElementById('searchCollectionPreview').classList.add('hidden');
     }
+}
+
+// Hiscores functionality
+let hiscoresData = [];
+let currentHiscoresPage = 1;
+let hiscoresPerPage = 10;
+
+async function showHiscores() {
+    console.log('Loading hiscores...');
+
+    // Hide main sections and show hiscores section
+    hideStats();
+    hideChart();
+    document.getElementById('hiscoresSection').classList.remove('hidden');
+
+    const hiscoresList = document.getElementById('hiscoresList');
+    hiscoresList.innerHTML = '<div style="text-align: center; padding: 20px;">Loading top performers...</div>';
+
+    try {
+        // Fetch collections data for hiscores
+        const FUNCTION_URL = window.SUPABASE_FUNCTION_URL || 'https://lfwsooldipswbvbpnoxo.functions.supabase.co';
+        const response = await fetch(`${FUNCTION_URL}/price-api/collections`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Collections data:', data);
+
+        if (!data.success || !data.collections) {
+            throw new Error('Invalid response format');
+        }
+
+        // Filter collections with analytics and gradients, sort by gradient descending
+        hiscoresData = data.collections
+            .filter(c => c.collection_analytics && c.collection_analytics.trend_gradient != null && c.collection_analytics.total_points >= 10)
+            .sort((a, b) => b.collection_analytics.trend_gradient - a.collection_analytics.trend_gradient);
+
+        if (hiscoresData.length === 0) {
+            hiscoresList.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No collections with sufficient data found. Try loading some collections first.</div>';
+            return;
+        }
+
+        // Reset pagination
+        currentHiscoresPage = 1;
+        hiscoresPerPage = 10;
+
+        // Render hiscores with pagination
+        renderHiscores();
+
+    } catch (error) {
+        console.error('Error loading hiscores:', error);
+        hiscoresList.innerHTML = `<div style="text-align: center; padding: 20px; color: #ff4757;">Error loading hiscores: ${error.message}</div>`;
+    }
+}
+
+function renderHiscores() {
+    const hiscoresList = document.getElementById('hiscoresList');
+    const startIndex = (currentHiscoresPage - 1) * hiscoresPerPage;
+    const endIndex = startIndex + hiscoresPerPage;
+    const currentPageData = hiscoresData.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(hiscoresData.length / hiscoresPerPage);
+
+    // Update button states in header
+    const top10Button = document.getElementById('top10Button');
+    const top100Button = document.getElementById('top100Button');
+    if (top10Button && top100Button) {
+        top10Button.classList.toggle('active', hiscoresPerPage === 10);
+        top100Button.classList.toggle('active', hiscoresPerPage === 100);
+    }
+
+    // Render pagination controls only if needed
+    let paginationHtml = '';
+    if (totalPages > 1) {
+        paginationHtml = `
+            <div class="hiscores-pagination-nav">
+                <button onclick="changeHiscoresPage(${currentHiscoresPage - 1})" ${currentHiscoresPage === 1 ? 'disabled' : ''}>← Prev</button>
+                <span>Page ${currentHiscoresPage} of ${totalPages}</span>
+                <button onclick="changeHiscoresPage(${currentHiscoresPage + 1})" ${currentHiscoresPage === totalPages ? 'disabled' : ''}>Next →</button>
+            </div>
+        `;
+    }
+
+    // Render column headers
+    const headersHtml = `
+        <div class="hiscores-list-header">
+            <div class="hiscore-header-rank">Rank</div>
+            <div class="hiscore-header-image"></div>
+            <div class="hiscore-header-name">Collection</div>
+            <div class="hiscore-header-avg-usd">Avg Price</div>
+            <div class="hiscore-header-data-points">Data Points</div>
+            <div class="hiscore-header-gradient">Trend Gradient</div>
+        </div>
+    `;
+
+    // Render hiscore list items with images
+    const listHtml = currentPageData.map((collection, index) => {
+        const analytics = collection.collection_analytics;
+        const gradientText = analytics.trend_gradient > 0 ? '+' + analytics.trend_gradient.toFixed(4) : analytics.trend_gradient.toFixed(4);
+        const trendClass = analytics.trend_gradient > 0 ? 'positive' : 'negative';
+        const rankNumber = startIndex + index + 1;
+
+        // Create image element - use cached base64 image if available, otherwise show placeholder
+        const imageHtml = collection.logo_image_base64 ?
+            `<img src="${collection.logo_image_base64}" class="hiscore-image" alt="${collection.name || collection.slug}">` :
+            `<div class="hiscore-image-placeholder">${rankNumber}</div>`;
+
+        return `
+            <div class="hiscore-list-item" onclick="loadCollectionFromHiscores('${collection.slug}')">
+                <div class="hiscore-rank">#${rankNumber}</div>
+                ${imageHtml}
+                <div class="hiscore-name">${collection.name || collection.slug.toUpperCase()}</div>
+                <div class="hiscore-avg-usd">$${analytics.avg_usd?.toFixed(2) || 'N/A'}</div>
+                <div class="hiscore-data-points">${analytics.total_points || 0} pts</div>
+                <div class="hiscore-gradient ${trendClass}">${gradientText}</div>
+            </div>
+        `;
+    }).join('');
+
+    hiscoresList.innerHTML = paginationHtml + '<div class="hiscores-list">' + headersHtml + listHtml + '</div>';
+}
+
+function changeHiscoresPerPage(newPerPage) {
+    hiscoresPerPage = newPerPage;
+    currentHiscoresPage = 1; // Reset to first page
+    renderHiscores();
+}
+
+function changeHiscoresPage(newPage) {
+    const totalPages = Math.ceil(hiscoresData.length / hiscoresPerPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentHiscoresPage = newPage;
+        renderHiscores();
+    }
+}
+
+function hideHiscores() {
+    document.getElementById('hiscoresSection').classList.add('hidden');
+}
+
+function loadCollectionFromHiscores(slug) {
+    // Hide hiscores and load the collection
+    hideHiscores();
+    collectionInput.value = slug;
+    handleLoadCollection();
 }

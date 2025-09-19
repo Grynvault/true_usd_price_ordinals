@@ -38,3 +38,7 @@ url = ""
 # Price API function - publicly accessible without authentication
 [functions.price-api]
 verify_jwt = false
+
+# Bitcoin price cache function - publicly accessible for cron jobs
+[functions.bitcoin-price-cache]
+verify_jwt = false
